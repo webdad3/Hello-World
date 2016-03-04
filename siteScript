@@ -1,4 +1,6 @@
 //Angular file for Generator:
+//This file needs the https://github.com/marcuswesting/store.js/ - store.min.js file (local storage wrapper)
+
 
 init()
 function init() {
