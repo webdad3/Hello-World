@@ -1,0 +1,580 @@
+//Angular file for Generator:
+
+init()
+function init() {
+    if (!store.enabled) {
+        alert('Local storage is not supported by your browser. Please disable "Private Mode", or upgrade to a modern browser.')
+        return
+    }
+}
+
+$(document).ready(function () {
+    $('#locStore').append($('<option></option>').val("-1").html("Please Select"));
+    store.forEach(function (key, val) {
+        $('#locStore').append(
+            $('<option></option>').val(key).html(key)
+        );
+    })
+    $("#locStore")[0].selectedIndex = 1;
+});
+
+var module = angular.module('generator', []);
+
+    angular.module('generator').filter('unsafe', function ($sce) {
+        return function (val) {
+            if ((typeof val == 'string' || val instanceof String)) {
+                return $sce.trustAsHtml(val);
+            }
+        };
+    });
+
+module.controller('generatorController', function ($scope) {
+    $scope.tableTypes = [];
+    $scope.tableTypes = [
+        { id: 'U', name: 'USER', value: 'U_' },
+        { id: 'R', name: 'REFERENCE', value: 'R_' },
+        { id: 'REG', name: 'CALL & MASK', value: 'REG_' }
+    ];
+
+    $scope.dataType = null;
+    $scope.dataTypes = [
+          { id: 'varchar', name: 'varchar' },
+          { id: 'int', name: 'int' },
+          { id: 'datetime', name: 'datetime' },
+          { id: 'decimal', name: 'decimal' },
+          { id: 'numeric', name: 'numeric' },
+          { id: 'bit', name: 'bit' },
+          { id: 'bigint', name: 'bigint' },
+          { id: 'binary', name: 'binary' },
+          { id: 'char', name: 'char' },
+          { id: 'date', name: 'date' },
+          { id: 'float', name: 'float' },
+          { id: 'image', name: 'image' },
+          { id: 'money', name: 'money' },
+          { id: 'nchar', name: 'nchar' },
+          { id: 'ntext', name: 'ntext' },
+          { id: 'nvarchar', name: 'nvarchar' },
+          { id: 'smallint', name: 'smallint' },
+          { id: 'text', name: 'text' },
+          { id: 'tinyint', name: 'tinyint' }
+          
+    ];
+
+    $scope.colOption = null;
+    $scope.colOptions = [
+          { id: 'NULL', name: 'NULL' },
+          { id: 'NOT NULL', name: 'NOT NULL' },
+          { id: 'identity(1,1)', name: 'identity(1,1)' },
+          { id: 'constraint', name: 'constraint' }
+    ];
+
+    $scope.tableColumns = [];
+    $scope.tableJSONData = [];
+
+    $scope.dataType = "varchar";
+    $scope.colOption = "NULL";
+    $scope.seqValue = 1;
+
+    $scope.tableNamePrePop = function () {
+        $scope.tableName = $scope.tableType;
+    };
+
+    function findElementTableTypes() {
+        for (var i = 0; i < $scope.tableTypes.length; i++) {
+
+            if ($scope.tableTypes[i].value == $scope.tableType) {
+                return i;
+            }
+        }
+        return null;
+    }
+    
+    $scope.typeCheck = function () {
+        nonEditable = [];
+        nonEditable = [
+            'bit',
+            'boolean',
+            'smallint',
+            'int',
+            'bigint',
+            'float',
+            'date',
+            'datetime',
+            'datatime2',
+            'image',
+            'real',
+            'smalldatetime',
+            'datetimeoffset',
+            'smallint',
+            'tinyint',
+            'uniqueidentifier'
+        ];
+
+        if (nonEditable.indexOf($scope.dataType) > -1) {
+            $scope.sizable = 'true';
+        } else {
+            $scope.sizable = 'false';
+        };
+                
+    };
+
+    $scope.getLocalStorageData = function () {
+        var storeKey = $("#locStore option:selected").val();
+        var DATA = store.get(storeKey);
+
+        var jsonDATA = $.parseJSON(DATA);
+
+        $scope.tableType = jsonDATA[3].tableType;
+        $scope.tableName = jsonDATA[0].tableName;
+        $scope.tableDescription = jsonDATA[4].tableDescription;
+        $scope.constraintName = jsonDATA[1].constraintName;
+
+        var tCols = jsonDATA[2];
+        $scope.tableColumns = tCols;
+
+    }
+
+    $scope.loadJSONData = function () {
+        var jsonDATA = $.parseJSON($("#jsonLoadValue")[0].value);
+
+        $scope.tableType = jsonDATA[3].tableType;
+        $scope.tableName = jsonDATA[0].tableName;
+        $scope.constraintName = jsonDATA[1].constraintName;
+        $scope.tableDescription = jsonDATA[4].tableDescription;
+
+        var tCols = jsonDATA[2];
+        $scope.tableColumns = tCols;
+    }
+
+    $scope.addRow = function () {
+        $scope.tableColumns.push({ 'colName': $scope.colName, 'dataType': $scope.dataType, 'colSize': $scope.colSize, 'colSequence': $scope.seqValue, 'colOption': $scope.colOption, 'PK': $scope.PK, 'Key': $scope.Key, 'eTable': $scope.eTable, 'colDescription': $scope.colDescription });
+        $scope.seqValue = parseInt($scope.seqValue) + 1;
+        $scope.colName = '';
+        $scope.dataType = '';
+        $scope.colDescription = '';
+        $scope.colSize = '';
+        $scope.colOption = '';
+        $scope.PK = '';
+        $scope.Key = '';
+        $scope.eTable = '';
+
+        $scope.tableColumns.sort(function (a, b) {
+            return parseFloat(a.colSequence) - parseFloat(b.colSequence);
+        });
+    };
+
+    $scope.editColumn = function (data) {
+        console.log(data.colName);
+        console.log(data.colSequence);
+
+        var i = null;
+        for (i = 0; $scope.tableColumns.length > i; i += 1) {
+            if ($scope.tableColumns[i].colSequence === data.colSequence) {
+                $scope.tableColumns.splice(i, 1);
+            }
+        }
+
+        $scope.seqValue = data.colSequence;
+        $scope.colName = data.colName;
+        $scope.colSize = data.colSize;
+        $scope.dataType = data.dataType;
+        $scope.colDescription = data.colDescription;
+        $scope.colOption = data.colOption;
+        $scope.PK = data.PK;
+        $scope.Key = data.Key;
+        $scope.eTable = data.eTable;
+
+
+        $scope.tableColumns.sort(function (a, b) {
+            return parseFloat(a.colSequence) - parseFloat(b.colSequence);
+        });
+
+    }
+
+    $scope.destroyObject = function ()
+    {
+        var deleteObj = confirm('Are you sure you want to delete this object?');
+        if (deleteObj == true) {
+            store.remove($("#locStore option:selected").val())
+            $("#locStore").find("option[value='" + $("#locStore").val() + "']").remove();
+            
+            $scope.tableType = '';
+            $scope.tableName = '';
+            $scope.constraintName = '';
+            $scope.seqValue = 1;
+            $scope.colName = '';
+            $scope.dataType = '';
+            $scope.colDescription = '';
+            $scope.colSize = '';
+            $scope.colOption = '';
+            $scope.PK = '';
+            $scope.Key = '';
+            $scope.eTable = '';
+            $scope.tableColumns = null;
+
+            $("#locStore")[0].val('');
+            $("#locStore")[0].selectedIndex = 1;
+        } else {
+
+        }
+        
+    };
+
+    $scope.buildScripts = function () {
+
+        $scope.tableJSONData.push({ 'tableName': $scope.tableName });
+        $scope.tableJSONData.push({ 'constraintName': $scope.constraintName });
+        $scope.tableJSONData.push($scope.tableColumns);
+        $scope.tableJSONData.push({ 'tableType': $scope.tableType });
+        $scope.tableJSONData.push({ 'tableDescription': $scope.tableDescription });
+
+        var scriptComment = 'JSON DATA';
+        var htmlFormatHeader = "<div style='background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em; height:100%;'>"
+            + "<pre style='margin: 0; line-height: 125%'>"
+            + "<span style='color: #007020; font-weight: bold'>--" + scriptComment + "</span> <br/>";
+        + "<span style='color: #4070a0'>"
+
+        var htmlFormatFooter = "</span></pre></div>"
+
+
+        var tableJSONObject = JSON.stringify($scope.tableJSONData);
+
+        $scope.JSONDATA = htmlFormatHeader + tableJSONObject + htmlFormatFooter;
+        store.set($scope.tableName, tableJSONObject);
+
+        //$scope.tableColumns.forEach(function (obj) {
+        //})
+
+        $scope.sqlOutput = null;
+
+        var scriptComment = 'Table Creation Script';
+        var htmlFormatHeader = "<div style='background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em; height:100%;'>"
+            + "<pre style='margin: 0; line-height: 125%'>"
+            + "<span style='color: #007020; font-weight: bold'>--" + scriptComment + "</span> <br/>";
+            + "<span style='color: #4070a0'>"
+
+        var htmlFormatFooter = "</span></pre></div>"
+
+
+        var mainTable = htmlFormatHeader
+            + "DROP TABLE [dbo].[" + $scope.tableName + "] <br/>"
+            + "GO <br/>"
+            + "SET ANSI_NULLS ON <br/>"
+            + "GO <br>"
+            + "SET QUOTED_IDENTIFIER ON <br/>"
+            + "GO <br/>"
+            + "SET ANSI_PADDING ON <br/>"
+            + "GO <br/>"
+            + "CREATE TABLE [dbo].[" + $scope.tableName + "](";
+
+        var PK = "";
+        var KeyCheck = false;
+        var KEY = "";
+
+        //COLUMNS
+            angular.forEach($scope.tableColumns, function (value, index) {
+                if (value.colSize != '') {
+                    mainTable += " <br/>[" + value.colName + '] [' + value.dataType + '] (' + value.colSize + ') ' + value.colOption + ',';
+                }else{
+                    mainTable += " <br/> [" + value.colName + '] [' + value.dataType + '] ' + value.colOption + ',';
+                }
+            })
+            
+        //PK
+            angular.forEach($scope.tableColumns, function (value, index) {
+                if (value.PK == true) {
+                    PK = "<br/>CONSTRAINT [PK_" + $scope.tableName + "] PRIMARY KEY CLUSTERED <br/>"
+                        + "("
+                        + "[" + value.colName + "] ASC <br/>"
+                        + ")WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY], <br/>"
+                }
+            })
+
+        //KEY             
+            angular.forEach($scope.tableColumns, function (value, index) {
+
+                if (value.Key == true && KeyCheck == false) {
+                    KeyCheck = true;
+                    KEY = "<br/> CONSTRAINT [" + $scope.constraintName + "] UNIQUE NONCLUSTERED <br/>"
+                    + "("
+                }
+
+                if (value.Key == true) {
+                    KEY += "<br/>[" + value.colName + "] ASC,"
+                }
+            })
+            if (KeyCheck == true) {
+                KEY = KEY.substring(0,KEY.length -1);
+                KEY += "<br/> WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, FILLFACTOR = 90) ON [PRIMARY] <br/>"
+                + ") ON [PRIMARY]"
+            }
+
+            
+
+            mainTable += PK + KEY + "<br/> GO " + htmlFormatFooter
+            
+            $scope.sqlOutput = mainTable;
+
+            $scope.buildCRUDScripts();
+    }
+
+    $scope.buildCRUDScripts = function () {
+
+        var identityCol = '';
+        var identityColDataType = '';
+        var parameters ='';
+        var insertColumns ='';
+        var insertParameters ='';
+        var updateParameters = '';
+
+        angular.forEach($scope.tableColumns, function (value, index) {
+            if(value.colOption != "identity(1,1)"){
+                if(value.colSize != ""){
+                    parameters += "<br/> @"+value.colName + " " + value.dataType + "(" + value.colSize + "),"
+                }else{
+                    parameters += "<br/> @"+value.colName + " " + value.dataType + ","
+                }
+
+                insertColumns += "<br/> " + value.colName + ","
+                insertParameters += "<br/> @" + value.colName + ","
+                updateParameters += value.colName + " = " + "@"+value.colName + ", <br/>";
+            }else{
+                identityCol = value.colName;
+                identityColDataType = value.identityColDataType;
+                updateParameters += value.colName + " = " + "@"+value.colName + ", <br/>";
+            }
+        })
+
+        var scriptComment = 'CRUD Operation Scripts';
+        var htmlFormatHeader = "<div style='background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em; height:100%;'>"
+            + "<pre style='margin: 0; line-height: 125%'>"
+            + "<span style='color: #007020; font-weight: bold'>--" + scriptComment + "</span> <br/>";
+        + "<span style='color: #4070a0'>"
+
+        var htmlFormatFooter =  "</span></pre></div>"
+
+        var sqlCRUD = htmlFormatHeader
+        + "SET ANSI_NULLS ON <br/>"
+        + "GO <br/>"
+        + "IF EXISTS ( SELECT * <br/>"
+        + " FROM   sysobjects <br/>"
+        + " WHERE  id = object_id(N'[dbo].[del_" + $scope.tableName + "]') <br/>"
+        + " and OBJECTPROPERTY(id, N'IsProcedure') = 1 ) <br/>"
+        + " BEGIN <br/>"
+        + " DROP PROCEDURE [dbo].[del_" + $scope.tableName + "] <br/>"
+        + " END <br/>"
+        + " GO <br/>"
+        + "CREATE PROCEDURE [dbo].[del_" + $scope.tableName + "] <br/>"
+        + "@ID int <br/>"
+        + "as <br/>"
+        + "DELETE " + $scope.tableName + "<br/>"
+        + "WHERE " + identityCol + " = @ID <br/>" 
+        + "return (@@ERROR) <br/>"
+        + "GO <br/>"
+
+        + "SET ANSI_NULLS ON <br/>"
+        + "GO <br/>"
+        + "IF EXISTS ( SELECT *  <br/>"
+        + "FROM   sysobjects <br/>"
+        + "WHERE  id = object_id(N'[dbo].[ins_" + $scope.tableName +"]') <br/>"
+        + "and OBJECTPROPERTY(id, N'IsProcedure') = 1 ) <br/>"
+        + "BEGIN <br/>"
+        + "DROP PROCEDURE [dbo].[ins_"+ $scope.tableName +"] <br/>"
+        + "END <br/>"
+        + "GO <br/>"
+        + "CREATE PROCEDURE [dbo].[ins_"+ $scope.tableName +"]"
+
+
+        parameters = parameters.substring(0,parameters.length -1);
+        sqlCRUD += parameters
+
+        insertColumns = insertColumns.substring(0,insertColumns.length -1);
+        insertParameters = insertParameters.substring(0,insertParameters.length -1);
+        updateParameters = updateParameters.substring(0,updateParameters.length -1);
+
+        sqlCRUD += "<br/> as "
+        + "INSERT INTO " + $scope.tableName + "(<br/>"
+        + insertColumns
+        + ") <br/>"        
+        + "VALUES (<br/>"
+        + insertParameters
+        + ") <br/>"
+        + "return (@ERROR) <br/>"
+        + "GO <br/>"
+
+        sqlCRUD += "SET ANSI_NULLS ON <br/>"
+        + "GO <br/> "
+        + "IF EXISTS ( SELECT *  <br/>"
+        + "FROM   sysobjects <br/>"
+        + "WHERE  id = object_id(N'[dbo].[upd_" + $scope.tableName + "]') <br/>"
+        + "and OBJECTPROPERTY(id, N'IsProcedure') = 1 ) <br/>"            
+        + "BEGIN <br/>"
+        + "DROP PROCEDURE [dbo].[upd_"+$scope.tableName +"] <br/>"
+        + "END <br/> "
+        + "GO </br> "
+        + "CREATE PROCEDURE upd" + $scope.tableName + "<br/> "
+        + "@"+identityCol + " " + identityColDataType + ", <br/> "
+        + parameters + " <br/> "
+        + "as <br/> "
+        + "UPDATE " + $scope.tableName + " <br/> "
+        + "SET " + updateParameters + " <br/> " 
+        + "WHERE " + identityCol + " = @" + identityCol + "<br/> "
+        + "return (@@ERROR) <br/> "
+        + "GO"
+
+        sqlCRUD += "SET ANSI_NULLS ON <br/>"
+        + "GO <br/>"
+        + "IF EXISTS ( SELECT *  <br/> "
+        + "FROM   sysobjects <br/> "
+        + "WHERE  id = object_id(N'[dbo].[sel_" + $scope.tableName + "]') <br/> "
+        + "and OBJECTPROPERTY(id, N'IsProcedure') = 1 ) <br/>"
+        + "BEGIN <br/> "
+        + "DROP PROCEDURE [dbo].[sel_"+$scope.tableName + "] <br/> "
+        + "END <br/> "                   
+        + "GO <br/> "
+        + "CREATE PROCEDURE sel_" + $scope.tableName + "<br/> "        
+        + "AS <br/> "
+        + "SELECT " + identityCol + ", <br/> "
+        + insertColumns + " <br/> "
+        + "FROM " + $scope.tableName + "<br/> "
+        + "GO"
+
+        $scope.sqlCRUD = sqlCRUD +  htmlFormatFooter;
+
+        $scope.buildETableSripts();
+    }
+
+    $scope.buildETableSripts = function () {
+        
+        var parameters = "";
+        angular.forEach($scope.tableColumns, function (value, index) {
+            if(value.eTable == true){
+                if(value.colSize != ""){
+                    parameters += "<br/> "+value.colName + " " + value.dataType + "(" + value.colSize + "),"
+                }else{
+                    parameters += "<br/> "+value.colName + " " + value.dataType + ","
+                }
+            }
+        });
+
+        var eTableName = $scope.tableName.replace($scope.tableName.charAt(0), "E"); 
+        parameters = parameters.substring(0, parameters.length - 1);
+
+
+        var scriptComment = 'E-Table Creation Scripts';
+        var htmlFormatHeader = "<div style='background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em; height:100%;'>"
+            + "<pre style='margin: 0; line-height: 125%'>"
+            + "<span style='color: #007020; font-weight: bold'>--" + scriptComment + "</span> <br/>";
+        + "<span style='color: #4070a0'>"
+
+        var htmlFormatFooter =  "</span></pre></div>"
+        
+        var sqlETable = htmlFormatHeader
+        + "DROP TABLE " + eTableName + " <br/>"
+        + "GO <br/> "
+        + "SET ANSI_NULLS ON <br/> " 
+        + "GO <br/> "
+        + "SET QUOTED_IDENTIFIER ON <br/> "
+        + "GO <br/> "
+        + "SET ANSI_PADDING ON <br/>"
+        + "GO <br/> "
+        + "CREATE TABLE " + eTableName + "( <br/> "
+        + parameters + "<br/> "
+        + ") ON [PRIMARY] <br/> "
+        + "GO "
+
+        $scope.sqlETable = sqlETable + htmlFormatFooter;
+
+        $scope.buildXTableScripts();
+    }
+
+    $scope.buildXTableScripts = function () {
+
+
+        var scriptComment = 'X-Table Inserts Scripts';
+        var htmlFormatHeader = "<div style='background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em; height:100%;'>"
+            + "<pre style='margin: 0; line-height: 125%'>"
+            + "<span style='color: #007020; font-weight: bold'>--" + scriptComment + "</span> <br/>";
+        + "<span style='color: #4070a0'>"
+
+        var htmlFormatFooter = "</span></pre></div>"
+
+
+
+        var index = findElementTableTypes();
+        var tableDescriptionTest = ($scope.tableDescription == '') ? '' : $scope.tableDescription;
+
+        var sqlXTable = htmlFormatHeader
+           + "INSERT INTO [dbo].[X_EDT_TBL] <br/>"
+           + "&nbsp;&nbsp;&nbsp;([TBL_NM],<br/>"
+           + "&nbsp;&nbsp;&nbsp;[TBL_TYP],<br/>"
+           + "&nbsp;&nbsp;&nbsp;[SELECT_SQL],<br/>"
+           + "&nbsp;&nbsp;&nbsp;[INSERT_SQL],<br/>"
+           + "&nbsp;&nbsp;&nbsp;[DELETE_SQL],<br/>"
+           + "&nbsp;&nbsp;&nbsp;[UPDATE_SQL],<br/>"
+           + "&nbsp;&nbsp;&nbsp;[DESCRIPTION],<br/>"
+           + "&nbsp;&nbsp;&nbsp;[CRTD_DAT],<br/>"
+           + "&nbsp;&nbsp;&nbsp;[CRTD_BY_LGN_ID],<br/>"
+           + "&nbsp;&nbsp;&nbsp;[LST_EDTD_DAT],<br/>"
+           + "&nbsp;&nbsp;&nbsp;[LST_EDTD_BY_LGN_ID])<br/>"
+           + "VALUES<br/>"
+           + "&nbsp;&nbsp;&nbsp;('" + $scope.tableName + "',<br/>"
+           + "&nbsp;&nbsp;&nbsp;" + $scope.tableTypes[0].name + "',<br/>"
+           + "&nbsp;&nbsp;&nbsp;'sel_" + $scope.tableName + "',<br/>"
+           + "&nbsp;&nbsp;&nbsp;'ins_" + $scope.tableName + "',<br/>"
+           + "&nbsp;&nbsp;&nbsp;'upd_" + $scope.tableName + "',<br/>"
+           + "&nbsp;&nbsp;&nbsp;'del_" + $scope.tableName + "',<br/>"
+           + "&nbsp;&nbsp;&nbsp;'" + tableDescriptionTest + "',<br/>"
+           + "&nbsp;&nbsp;&nbsp;getdate(),<br/>"
+           + "&nbsp;&nbsp;&nbsp;SYSTEM_USER,<br/>"
+           + "&nbsp;&nbsp;&nbsp;getdate(),<br/>"
+           + "&nbsp;&nbsp;&nbsp;SYSTEM_USER)<br/><br/><br/>"
+
+
+        var sqlXCol = '';
+
+        angular.forEach($scope.tableColumns, function (value, index) {
+            var colDescriptionTest = (value.colDescription == '') ? '' : value.colDescription;
+            sqlXCol +=
+                "INSERT INTO [dbo].[X_EDT_COL] <br/>"
+               + "&nbsp;&nbsp;&nbsp;([COL_NM] <br/>"
+               + "&nbsp;&nbsp;&nbsp;,[TBL_NM] <br/>"
+               + "&nbsp;&nbsp;&nbsp;,[SEQ_NO] <br/>"
+               + "&nbsp;&nbsp;&nbsp;,[DESCRIPTION] <br/>"
+               + "&nbsp;&nbsp;&nbsp;,[DATA_TYP] <br/>"
+               + "&nbsp;&nbsp;&nbsp;,[DD_SEL_PROC] <br/>"
+               + "&nbsp;&nbsp;&nbsp;,[DD_VALU_COL] <br/>"
+               + "&nbsp;&nbsp;&nbsp;,[DD_DISP_COL] <br/>"
+               + "&nbsp;&nbsp;&nbsp;,[CRTD_DAT] <br/>"
+               + "&nbsp;&nbsp;&nbsp;,[CRTD_BY_LGN_ID] <br/>"
+               + "&nbsp;&nbsp;&nbsp;,[LST_EDTD_DAT] <br/>"
+               + "&nbsp;&nbsp;&nbsp;,[LST_EDTD_BY_LGN_ID]) <br/>"
+               + " VALUES <br/>"
+               + "&nbsp;&nbsp;&nbsp;('"+value.colName+"' <br/>"
+               + "&nbsp;&nbsp;&nbsp;,'"+$scope.tableName+"' <br/>"
+               + "&nbsp;&nbsp;&nbsp;," + value.colSequence + " <br/>"
+               + "&nbsp;&nbsp;&nbsp;,'" + colDescriptionTest + "' <br/>"
+               + "&nbsp;&nbsp;&nbsp;,'"+value.dataType+"' <br/>"
+               + "&nbsp;&nbsp;&nbsp;,null <br/>"
+               + "&nbsp;&nbsp;&nbsp;,null <br/>"
+               + "&nbsp;&nbsp;&nbsp;,null <br/>"
+               + "&nbsp;&nbsp;&nbsp;,getdate() <br/>"
+               + "&nbsp;&nbsp;&nbsp;,SYSTEM_USER <br/>"
+               + "&nbsp;&nbsp;&nbsp;,getdate() <br/>"
+               + "&nbsp;&nbsp;&nbsp;,SYSTEM_USER) <br/>"
+        })
+
+        $scope.xTableInserts = sqlXTable + sqlXCol + htmlFormatFooter;
+
+    };
+
+    $scope.saveData = function () { };
+
+    $scope.loadData = function () { };
+
+    
+});
+
+
+
+ 
